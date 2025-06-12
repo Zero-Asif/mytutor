@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+model User {
+  id           String  @id @unique @default(uuid())
+  name         String
+  email        String
+  password     String
+  bio          String?
+  phone        String?
+  grade        String?
+  education    String?
+  dob          String?
+  gender       String?
+  profileImage String?
+  coverImage   String?
+  location     String?
+
+  verified          Boolean             @default(false)
+  about             String?
+  role              Role                @default(STUDENT)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  Token             Token[]
+  emailVerification emailVerification[]
+  RestPassword      RestPassword[]
+  Post              Post[]
+  TutorRequest      TutorRequest[]
+  ConnectedAccounts ConnectedAccount[]  @relation("ConnectedAccountUser")
+  ConnectedAccount  ConnectedAccount[]
+  RatingBy          Rating[]            @relation("ratingBy")
+  RatingTo          Rating[]            @relation("ratingTo")
+}
+
+model Rating {
+  id           String   @id @unique @default(uuid())
+  postId       String
+  ratingBy     String
+  ratingTo     String
+  rating       Int
+  ratingText   String?
+  ratedAt      DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  ratingByUser User     @relation("ratingBy", fields: [ratingBy], references: [id], onDelete: Cascade)
+  ratingToUser User     @relation("ratingTo", fields: [ratingTo], references: [id], onDelete: Cascade)
+  Post         Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model RestPassword {
+  id        String   @id @unique @default(uuid())
+  userId    String
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model emailVerification {
+  id        String   @id @unique @default(uuid())
+  userId    String
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Token {
+  id        String   @id @unique @default(uuid())
+  userId    String
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Post {
+  id           String         @id @unique @default(uuid())
+  medium       String
+  Class        String
+  subject      String
+  fees         String
+  description  String
+  booked       Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  userId       String
+  User         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  TutorRequest TutorRequest[]
+  Rating       Rating[]
+}
+
+model TutorRequest {
+  id        String   @id @unique @default(uuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model ConnectedAccount {
+  id            String   @id @unique @default(uuid())
+  userId        String
+  contactUserId String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ContactUser   User     @relation("ConnectedAccountUser", fields: [contactUserId], references: [id], onDelete: Cascade)
+  Chat          Chat[]
+}
+
+model Chat {
+  id          String           @id @unique @default(uuid())
+  connectedId String
+  senderId    String
+  receiverId  String
+  message     String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  Connected   ConnectedAccount @relation(fields: [connectedId], references: [id], onDelete: Cascade)
+}
